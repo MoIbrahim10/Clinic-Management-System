@@ -123,8 +123,8 @@ The API uses the following middlewares:
 * `Error handling` - a middleware to handle errors in the API.
 
 ## Contributors
-- [@Amr Allam](https://github.com/amriallam)
 - [@Mohammed Ibrahim](https://github.com/MoIbrahim10)
+- [@Amr Allam](https://github.com/amriallam)
 - [@Mohammed Alaa](https://github.com/moalaacs)
 - [@Ahmed Hassan](https://github.com/hassan9810)
 - [@Hazem Magdy](https://github.com/Hazem-Magdy)
