@@ -83,17 +83,17 @@ exports.addPatient = async (request, response, next) => {
     response
       .status(201)
       .json({ message: "Patient created successfully.", savedPatient });
-  } catch (error) {next(error);}
+  } catch (error) { next(error); }
 };
 
 // Put a patient
 exports.putPatientById = async (request, response, next) => {
   try {
-    let patientExists = await patientSchema.find({ _id: request.body.clinic });
+    let patientExists = await patientSchema.find({ _id: request.params.id });
     if (!patientExists)
       return response
         .status(400)
-        .json({ message: `Patient ${request.body.id} not found` });
+        .json({ message: `Patient ${request.params.id} not found` });
     let testEmailandPhone = await users.findOne({
       $or: [
         { _email: request.body.email },
