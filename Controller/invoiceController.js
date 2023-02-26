@@ -387,10 +387,8 @@ exports.getInvoiceById = async (request, response, next) => {
 exports.allInvoicesReports = (request, response, next) => {
   invoiceSchema
     .find()
-    .populate({ path: "_appointmentId", select: { _id: 0 } })
-    .populate({ path: "_doctorId", select: { _id: 0 } })
-    .populate({ path: "_clinicId", select: { _id: 0 } })
-    .populate({ path: "_patientId", select: { _id: 0 } })
+    .populate({ path: "clinic_Id", select: { _id: 0 } })
+    .populate({ path: "patient_Id", select: { _id: 0 } })
     .then((data) => {
       response.status(200).json(data);
     })
@@ -405,10 +403,8 @@ exports.dailyInvoicesReports = (request, response, next) => {
   let nextDay = new Date(date.getTime() + day);
   invoiceSchema
     .find({ date: { $gt: date, $lt: nextDay } })
-    .populate({ path: "_appointmentId", select: { _id: 0 } })
-    .populate({ path: "_doctorId", select: { _id: 0 } })
-    .populate({ path: "_clinicId", select: { _id: 0 } })
-    .populate({ path: "_patientId", select: { _id: 0 } })
+    .populate({ path: "clinic_Id", select: { _id: 0 } })
+    .populate({ path: "patient_Id", select: { _id: 0 } })
     .then((data) => {
       response.status(200).json(data);
     })
@@ -418,11 +414,9 @@ exports.dailyInvoicesReports = (request, response, next) => {
 // Patient Invoice Reports
 exports.patientInvoicesReports = (request, response, next) => {
   invoiceSchema
-    .find({ _patientId: request.params.id })
-    .populate({ path: "_appointmentId", select: { _id: 0 } })
-    .populate({ path: "_doctorId", select: { _id: 0 } })
-    .populate({ path: "_clinicId", select: { _id: 0 } })
-    .populate({ path: "_patientId", select: { _id: 0 } })
+    .find({ patient_Id: request.params.id })
+    .populate({ path: "clinic_Id", select: { _id: 0 } })
+    .populate({ path: "patient_Id", select: { _id: 0 } })
     .then((data) => {
       response.status(200).json(data);
     })
@@ -447,7 +441,7 @@ const reqNamesToSchemaNames = (query) => {
         break;
       }
     }
-    replacedQuery[newKey] = query[key];
+    replacedQuery[newKey] = query[key]; 
   }
   return replacedQuery;
 };
