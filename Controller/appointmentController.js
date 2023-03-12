@@ -17,8 +17,6 @@ const {
   dateBetween,
   mapDateToDay,
 } = require("../helper/helperfns");
-const { request, response } = require("express");
-const { format } = require("morgan");
 
 // Add a new Appointment
 exports.addAppointment = async (request, response, next) => {
