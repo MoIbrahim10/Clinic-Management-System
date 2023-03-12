@@ -17,7 +17,6 @@ const {
   mapDateToDay,
 } = require("../helper/helperfns");
 
-
 // Add a new Appointment
 exports.addAppointment = async (request, response, next) => {
   try {
@@ -80,10 +79,10 @@ exports.addAppointment = async (request, response, next) => {
           clinic._weeklySchedule[i].end
         ) &&
         dayInWeek == clinic._weeklySchedule[i].day
-      ){
+      ) {
         flagForSchedule = true;
-      break;
-    }
+        break;
+      }
     }
     if (!flagForSchedule)
       return response
@@ -293,7 +292,10 @@ exports.allAppointmentsReports = (request, response, next) => {
     .find()
     .populate({ path: "_patientId", select: { _id: 0, _fname: 1, _lname: 1 } })
     .populate({ path: "_doctorId", select: { _id: 0, _fname: 1, _lname: 1 } })
-    .populate({ path: "_clinicId", select: { _id: 0, _specilization: 1 } })
+    .populate({
+      path: "_clinicId",
+      select: { _id: 0, _specilization: 1, _contactNumber: 1 },
+    })
     .then((data) => {
       response.status(200).json(data);
     })
@@ -303,14 +305,34 @@ exports.allAppointmentsReports = (request, response, next) => {
 // Appointments Daily Reports
 exports.dailyAppointmentsReports = (request, response, next) => {
   let date = new Date();
-  date.setHours(0, 0, 0);
-  let day = 60 * 60 * 24 * 1000;
-  let nextDay = new Date(date.getTime() + day);
+  let today =
+    ("0" + date.getDate()).slice(-2) +
+    "/" +
+    ("0" + (date.getMonth() + 1)).slice(-2) +
+    "/" +
+    date.getFullYear();
   appointmentSchema
-    .find({ date: { $gt: date, $lt: nextDay } })
-    // .populate({ path: "_patientId", select: { _id: 0, _fname: 1, _lname: 1 } })
+    .find({ _date: today })
+    .populate({ path: "_patientId", select: { _id: 0, _fname: 1, _lname: 1 } })
     .populate({ path: "_doctorId", select: { _id: 0, _fname: 1, _lname: 1 } })
-    .populate({ path: "_clinicId", select: { _id: 0, _specilization: 1 } })
+    .populate({
+      path: "_clinicId",
+      select: { _id: 0, _specilization: 1, _contactNumber: 1 },
+    })
+    .then((data) => {
+      response.status(200).json(data);
+    })
+    .catch((error) => next(error));
+};
+
+exports.rangeAppointmentsReports = (request, response, next) => {
+  let startDate = new Date(request.params.startDate);
+  let endDate = new Date(request.params.endDate);
+  console.log(startDate, endDate, request.params.endDate);
+  appointmentSchema
+    .find({
+      _id: { $gte: startDate.getTime(), $lte: endDate.getTime() },
+    })
     .then((data) => {
       response.status(200).json(data);
     })

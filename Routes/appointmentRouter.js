@@ -11,12 +11,11 @@ const authorizationMW = require("../Middlewares/authorizationMW");
 const router = express.Router();
 
 
-  router
+router
   .route("/appointment")
   .all(authorizationMW.accessAppointment("patient", "doctor", "receptionist","nurse"))
   .get(controller.getAllAppointments)
   .post(validateAppointment, validatorMiddleware, controller.addAppointment);
-
 
 router
   .route("/appointmentReports/all")
@@ -25,6 +24,10 @@ router
 router
   .route("/appointmentReports/daily")
   .get(authorizationMW.access(), controller.dailyAppointmentsReports);
+
+router
+  .route("/appointmentReports/:startDate/:endDate")
+  .get(authorizationMW.access(), controller.rangeAppointmentsReports);
 
 router
   .route("/appointmentReports/patient/:id")
