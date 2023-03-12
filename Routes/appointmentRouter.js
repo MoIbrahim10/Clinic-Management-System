@@ -16,12 +16,11 @@ const router = express.Router();
 //   .get(controller.getAllAppointments)
 //   .post(validateAppointment, validatorMiddleware, controller.addAppointment);
 
-  router
+router
   .route("/appointment")
   .all(authorizationMW.accessAppointment("patient"))
   .get(controller.getAllAppointments)
   .post(validateAppointment, validatorMiddleware, controller.addAppointment);
-
 
 router
   .route("/appointmentReports/all")
@@ -30,6 +29,10 @@ router
 router
   .route("/appointmentReports/daily")
   .get(authorizationMW.access(), controller.dailyAppointmentsReports);
+
+router
+  .route("/appointmentReports/:startDate/:endDate")
+  .get(authorizationMW.access(), controller.rangeAppointmentsReports);
 
 router
   .route("/appointmentReports/patient/:id")
