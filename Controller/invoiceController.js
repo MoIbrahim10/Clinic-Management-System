@@ -65,10 +65,29 @@ exports.addInvoice = async (request, response, next) => {
     for (let i = 0; i < services.length; i++) {
       let clinicService = clinic._services.find((service) => service.name === services[i].name);
       if (!clinicService) return response.status(400).json({ error: `Service ${services[i].name} not found in clinic ${request.body.clinicId}` });
-
-      totalCost += clinicService.cost + services[i].additionalCosts;
-      let invoiceServicesobject = { "name": clinicService.name, "cost": clinicService.cost + services[i].additionalCosts };
-      invoiceServices.push(invoiceServicesobject);
+      /*  insurance added  */
+      switch (request.userData._role){
+        case "doctor":
+          // discount 30%
+          let discountForDoctor = 30;
+          totalCost += (clinicService.cost * (100 - discountForDoctor / 100)) + services[i].additionalCosts;
+          let invoiceServicesObject1 = { "name": clinicService.name, "cost": clinicService.cost + services[i].additionalCosts };
+          invoiceServices.push(invoiceServicesObject1);
+          break;
+        case "employee":
+          // discount 10%
+          let discountForEmployee = 10;
+          totalCost += (clinicService.cost * (100 - discountForEmployee / 100)) + services[i].additionalCosts;
+          let invoiceServicesObject2 = { "name": clinicService.name, "cost": clinicService.cost + services[i].additionalCosts };
+          invoiceServices.push(invoiceServicesObject2);
+          break;
+        default:
+          // no discount
+          totalCost += clinicService.cost + services[i].additionalCosts;
+          let invoiceServicesObject3 = { "name": clinicService.name, "cost": clinicService.cost + services[i].additionalCosts };
+          invoiceServices.push(invoiceServicesObject3);
+          break;
+      }
     }
     let paymentMethod = "cash";
     if (request.body.paymentMethod) {
@@ -441,7 +460,7 @@ const reqNamesToSchemaNames = (query) => {
         break;
       }
     }
-    replacedQuery[newKey] = query[key]; 
+    replacedQuery[newKey] = query[key];
   }
   return replacedQuery;
 };
