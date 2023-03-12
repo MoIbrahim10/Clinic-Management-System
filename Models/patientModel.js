@@ -1,14 +1,8 @@
 const mongoose = require("mongoose");
 const AutoIncrement = require("mongoose-sequence")(mongoose);
 const personSchema = require("./personModel");
+const invoicesSchema = require("./invoiceModel");
 
-const invoicesSchema = new mongoose.Schema({
-    invoice_id: { type: String },
-    total: { type: Number },
-    totalDue: { type: Number },
-    status: { type: String },
-},  { _id: false });
-  
 
 /*** crete schema for patients collection ***/
 const patientSchema = new mongoose.Schema(

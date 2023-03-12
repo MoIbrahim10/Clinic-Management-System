@@ -10,15 +10,10 @@ const authorizationMW = require("../Middlewares/authorizationMW");
 
 const router = express.Router();
 
-// router
-//   .route("/appointment")
-//   .all(authorizationMW.accessClinicResources("receptionist"))
-//   .get(controller.getAllAppointments)
-//   .post(validateAppointment, validatorMiddleware, controller.addAppointment);
 
   router
   .route("/appointment")
-  .all(authorizationMW.accessAppointment("patient"))
+  .all(authorizationMW.accessAppointment("patient", "doctor", "receptionist","nurse"))
   .get(controller.getAllAppointments)
   .post(validateAppointment, validatorMiddleware, controller.addAppointment);
 
