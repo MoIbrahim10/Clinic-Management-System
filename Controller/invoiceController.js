@@ -93,14 +93,14 @@ exports.addInvoice = async (request, response, next) => {
       switch (patientType){
         case "doctor":
           // discount 70%
-          let doctorDiscount = 70/100;
+          let doctorDiscount = (100-70)/100;
           totalCost += ((clinicService.cost + services[i].additionalCosts)*doctorDiscount);
           let invoiceServicesObject1 = { "name": clinicService.name, "cost": ((clinicService.cost + services[i].additionalCosts)*doctorDiscount) };
           invoiceServices.push(invoiceServicesObject1);
           break;
         case "employee":
           // discount 40%
-          let employeeDiscount = 40/100;
+          let employeeDiscount = (100-40)/100;
           totalCost += ((clinicService.cost + services[i].additionalCosts)*employeeDiscount);
           let invoiceServicesObject2 = { "name": clinicService.name, "cost": ((clinicService.cost + services[i].additionalCosts)*employeeDiscount) };
           invoiceServices.push(invoiceServicesObject2);
@@ -318,14 +318,14 @@ exports.editInvoice = async (request, response, next) => {
       switch (patientType){
         case "doctor":
           // discount 70%
-          let doctorDiscount = 70/100;
+          let doctorDiscount = (100-70)/100;
           totalCost += ((clinicService.cost + services[i].additionalCosts)*doctorDiscount);
           let invoiceServicesObject1 = { "name": clinicService.name, "cost": ((clinicService.cost + services[i].additionalCosts)*doctorDiscount) };
           invoiceServices.push(invoiceServicesObject1);
           break;
         case "employee":
           // discount 40%
-          let employeeDiscount = 40/100;
+          let employeeDiscount = (100-40)/100;
           totalCost += ((clinicService.cost + services[i].additionalCosts)*employeeDiscount);
           let invoiceServicesObject2 = { "name": clinicService.name, "cost": ((clinicService.cost + services[i].additionalCosts)*employeeDiscount) };
           invoiceServices.push(invoiceServicesObject2);
