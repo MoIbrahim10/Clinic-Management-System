@@ -543,7 +543,7 @@ exports.patientInvoicesReports = (request, response, next) => {
   invoiceSchema
     .find({ patient_Id: request.params.id })
     .populate({ path: "clinic_Id", select: { _id: 0 } })
-    .populate({ path: "patient_Id", select: { _id: 0 } })
+    // .populate({ path: "patient_Id", select: { _id: 0 } })
     .then((data) => {
       response.status(200).json(data);
     })
