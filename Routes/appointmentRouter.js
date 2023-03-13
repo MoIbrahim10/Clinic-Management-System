@@ -31,7 +31,7 @@ router
   .get(authorizationMW.access(), controller.dailyAppointmentsReports);
 
 router
-  .route("/appointmentReports/:startDate/:endDate")
+  .route("/appointmentReports/range/:startDate/:endDate")
   .get(authorizationMW.access(), controller.rangeAppointmentsReports);
 
 router

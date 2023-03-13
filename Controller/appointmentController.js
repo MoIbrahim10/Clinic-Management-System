@@ -299,10 +299,10 @@ exports.dailyAppointmentsReports = (request, response, next) => {
     .catch((error) => next(error));
 };
 
+// Appointments Range Reports
 exports.rangeAppointmentsReports = (request, response, next) => {
   let startDate = new Date(request.params.startDate);
   let endDate = new Date(request.params.endDate);
-  console.log(startDate, endDate, request.params.endDate);
   appointmentSchema
     .find({
       _id: { $gte: startDate.getTime(), $lte: endDate.getTime() },
@@ -313,13 +313,16 @@ exports.rangeAppointmentsReports = (request, response, next) => {
     .catch((error) => next(error));
 };
 
-// Patient Appointments Reports
+//Patient Appointments Reports
 exports.patientAppointmentsReports = (request, response, next) => {
   appointmentSchema
     .find({ _patientId: request.params.id })
     .populate({ path: "_patientId", select: { _id: 0, _fname: 1, _lname: 1 } })
     .populate({ path: "_doctorId", select: { _id: 0, _fname: 1, _lname: 1 } })
-    .populate({ path: "_clinicId", select: { _id: 0, _specilization: 1 } })
+    .populate({
+      path: "_clinicId",
+      select: { _id: 0, _specilization: 1, _contactNumber: 1 },
+    })
     .then((data) => {
       response.status(200).json(data);
     })
@@ -332,7 +335,10 @@ exports.doctorAppointmentsReports = (request, response, next) => {
     .find({ _doctorId: request.params.id })
     .populate({ path: "_patientId", select: { _id: 0, _fname: 1, _lname: 1 } })
     .populate({ path: "_doctorId", select: { _id: 0, _fname: 1, _lname: 1 } })
-    .populate({ path: "_clinicId", select: { _id: 0, _specilization: 1 } })
+    .populate({
+      path: "_clinicId",
+      select: { _id: 0, _specilization: 1, _contactNumber: 1 },
+    })
     .then((data) => {
       response.status(200).json(data);
     })
