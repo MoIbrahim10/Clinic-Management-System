@@ -71,21 +71,11 @@ exports.addInvoice = async (request, response, next) => {
     let invoiceServices = [];
 
     for (let i = 0; i < services.length; i++) {
-      let clinicService = clinic._services.find(
-        (service) => service.name === services[i].name
-      );
-      if (!clinicService)
-        return response
-          .status(400)
-          .json({
-            error: `Service ${services[i].name} not found in clinic ${request.body.clinicId}`,
-          });
+      let clinicService = clinic._services.find((service) => service.name === services[i].name);
+      if (!clinicService) return response.status(400).json({ error: `Service ${services[i].name} not found in clinic ${request.body.clinicId}` });
 
       totalCost += clinicService.cost + services[i].additionalCosts;
-      let invoiceServicesobject = {
-        name: clinicService.name,
-        cost: clinicService.cost + services[i].additionalCosts,
-      };
+      let invoiceServicesobject = { "name": clinicService.name, "cost": clinicService.cost + services[i].additionalCosts };
       invoiceServices.push(invoiceServicesobject);
     }
     let paymentMethod = "cash";
