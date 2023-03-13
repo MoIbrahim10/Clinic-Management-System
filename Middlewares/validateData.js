@@ -250,6 +250,10 @@ let doctorValidation = [
   check("schedule.*.end")
     .matches(/^([0-9]|0[0-9]|1[0-9]|2[0-3]):[0-5][0-9]$/)
     .withMessage("Invalid End time format, should be in the form 00:00"),
+    check("medicalHistory")
+    .optional()
+    .isString()
+    .withMessage("medical history should be a string"),
 ];
 let doctorPatchValidation = [
   validatePatchPerson,
@@ -296,6 +300,10 @@ let doctorPatchValidation = [
     .optional()
     .matches(/^([0-9]|0[0-9]|1[0-9]|2[0-3]):[0-5][0-9]$/)
     .withMessage("Invalid End time format, should be in the form 00:00"),
+    check("medicalHistory")
+    .optional()
+    .isString()
+    .withMessage("medical history should be a string"),
 ];
 let numberIdParamsValidation = [
   param("id").isInt().withMessage("ID must be number"),
@@ -310,6 +318,10 @@ let employeeValidation = [
   validatePerson,
   check("salary").isInt().withMessage("salary should be number"),
   check("workingHours").isInt().withMessage("workingHours should be number"),
+  check("medicalHistory")
+    .optional()
+    .isString()
+    .withMessage("medical history should be a string"),
 ];
 let employeePatchValidation = [
   validatePatchPerson,
@@ -318,6 +330,10 @@ let employeePatchValidation = [
     .optional()
     .isInt()
     .withMessage("workingHours should be number"),
+    check("medicalHistory")
+    .optional()
+    .isString()
+    .withMessage("medical history should be a string"),
 ];
 let medicineValidation = [
   check("name").isString().withMessage("Name should be a string"),
@@ -356,6 +372,8 @@ let medicinePatchValidation = [
 ];
 let validateAppointment = [
   check("patientId").isNumeric().withMessage("Patient Id should be a number"),
+  check("patientType")
+  .isIn(["patient", "doctor", "employee"]),
   check("doctorId").isNumeric().withMessage("Doctor Id should be a number"),
   check("clinicId").isNumeric().withMessage("clinic Id should be a number"),
   check("date")
@@ -372,10 +390,9 @@ let validateAppointment = [
     .withMessage("Invalid appointment status"),
 ];
 let validatePatchAppointment = [
-  check("patientId")
-    .optional()
-    .isNumeric()
-    .withMessage("Patient Id should be a number"),
+  check("patientId").optional().isNumeric().withMessage("Patient Id should be a number"),
+  check("patientType").optional()
+  .isIn(["patient", "doctor", "employee"]),
   check("doctorId")
     .optional()
     .isNumeric()
@@ -477,6 +494,9 @@ let validatePatchPrescription = [
 ];
 let validateInvoice = [
   check("patientId").isNumeric().withMessage("Patient Id should be a number"),
+  check("patientType")
+  .isIn(["patient", "doctor", "employee"])
+  .withMessage("Invalid patient Type"),
   check("clinicId").isNumeric().withMessage("clinic Id should be a number"),
   check("services")
     .isArray()
@@ -510,10 +530,10 @@ let validateInvoice = [
     .withMessage("amountDue should be a number"),
 ];
 let validatePatchInvoice = [
-  check("patientId")
-    .optional()
-    .isNumeric()
-    .withMessage("Patient Id should be a number"),
+  check("patientId").optional().isNumeric().withMessage("Patient Id should be a number"),
+  check("patientType").optional()
+  .isIn(["patient", "doctor", "employee"])
+  .withMessage("Invalid patient Type"),
   check("clinicId")
     .optional()
     .isNumeric()

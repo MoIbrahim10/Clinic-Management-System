@@ -10,10 +10,15 @@ const appointmentSchema = new mongoose.Schema({
     ref: "clinic",
     required: true,
   },
-  _patientId: {
+  patientId: {
     type: Number,
-    ref: "patient",
     required: true,
+    ref: "user"
+  },
+  patientType: {
+    type: String,
+    required: true,
+    enum: ["patient", "doctor", "employee"],
   },
   _doctorId: {
     type: Number,

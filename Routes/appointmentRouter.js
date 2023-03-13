@@ -32,6 +32,10 @@ router
   .get(authorizationMW.access(), controller.dailyAppointmentsReports);
 
 router
+  .route("/appointmentReports/range/:startDate/:endDate")
+  .get(authorizationMW.access(), controller.rangeAppointmentsReports);
+
+router
   .route("/appointmentReports/patient/:id")
   .get(authorizationMW.access(), controller.patientAppointmentsReports);
 

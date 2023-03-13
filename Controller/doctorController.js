@@ -113,6 +113,7 @@ exports.addDoctor = async (request, response, next) => {
       _specilization: request.body.speciality,
       _clinic: acceptedClinic._id,
       _schedule: request.body.schedule,
+      _medicalHistory: request.body.medicalHistory,
     };
     if (request.file) {
       sentObject._image = request.file.path;
@@ -224,6 +225,7 @@ exports.putDoctorById = async (request, response, next) => {
       _specilization: request.body.speciality,
       _clinic: acceptedClinic._id,
       _schedule: request.body.schedule,
+      _medicalHistory: request.body.medicalHistory,
     };
     if (request.file) {
       sentObject._image = request.file.path;
@@ -325,6 +327,9 @@ exports.patchDoctorById = async (request, response, next) => {
     }
     if (request.body.email) {
       tempDoctor._email = request.body.email;
+    }
+    if (request.body.medicalHistory) {
+      tempDoctor._medicalHistory = request.body.medicalHistory;
     }
     if (request.body.schedule) {
       tempDoctor._schedule = request.body.schedule;
@@ -566,6 +571,8 @@ const reqNamesToSchemaNames = (query) => {
     profileImage: "_image",
     speciality: "_specilization",
     clinic: "_clinics",
+    medicalHistory: "_medicalHistory",
+
   };
 
   const replacedQuery = {};
