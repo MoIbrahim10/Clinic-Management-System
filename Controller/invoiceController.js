@@ -22,8 +22,16 @@ exports.getInvoices = async (request, response, next) => {
   try {
     let query = reqNamesToSchemaNames(request.query);
     let invoice = await filterData(invoiceSchema, query, [
-      { path: "patient_Id", options: { strictPopulate: false }, select: { _email: 1, _fname: 1, _lname: 1 } },
-      { path: "clinic_Id", options: { strictPopulate: false }, select: { _specilization: 1 } },
+      {
+        path: "patient_Id",
+        options: { strictPopulate: false },
+        select: { _email: 1, _fname: 1, _lname: 1 },
+      },
+      {
+        path: "clinic_Id",
+        options: { strictPopulate: false },
+        select: { _specilization: 1 },
+      },
     ]);
     invoice = sortData(invoice, query);
     invoice = paginateData(invoice, request.query);
@@ -34,14 +42,14 @@ exports.getInvoices = async (request, response, next) => {
   }
 };
 
-
-
 const generateInvoiceId = () => {
   const date = new Date();
   const year = date.getFullYear().toString().substr(-2);
   const day = date.getDate().toString().padStart(2, "0");
   const month = (date.getMonth() + 1).toString().padStart(2, "0");
-  const random = Math.floor(Math.random() * 10000).toString().padStart(4, "0");
+  const random = Math.floor(Math.random() * 10000)
+    .toString()
+    .padStart(4, "0");
   const invoiceId = `${year}-${day}${month}-${random}`;
   return invoiceId;
 };
@@ -63,18 +71,34 @@ exports.addInvoice = async (request, response, next) => {
     let invoiceServices = [];
 
     for (let i = 0; i < services.length; i++) {
-      let clinicService = clinic._services.find((service) => service.name === services[i].name);
-      if (!clinicService) return response.status(400).json({ error: `Service ${services[i].name} not found in clinic ${request.body.clinicId}` });
+      let clinicService = clinic._services.find(
+        (service) => service.name === services[i].name
+      );
+      if (!clinicService)
+        return response
+          .status(400)
+          .json({
+            error: `Service ${services[i].name} not found in clinic ${request.body.clinicId}`,
+          });
 
       totalCost += clinicService.cost + services[i].additionalCosts;
-      let invoiceServicesobject = { "name": clinicService.name, "cost": clinicService.cost + services[i].additionalCosts };
+      let invoiceServicesobject = {
+        name: clinicService.name,
+        cost: clinicService.cost + services[i].additionalCosts,
+      };
       invoiceServices.push(invoiceServicesobject);
     }
     let paymentMethod = "cash";
     if (request.body.paymentMethod) {
       paymentMethod = request.body.paymentMethod;
-      if (paymentMethod !== "cash" && paymentMethod !== "credit card" && paymentMethod !== "insurance") {
-        return response.status(400).json({ error: "Payment method not accepted" });
+      if (
+        paymentMethod !== "cash" &&
+        paymentMethod !== "credit card" &&
+        paymentMethod !== "insurance"
+      ) {
+        return response
+          .status(400)
+          .json({ error: "Payment method not accepted" });
       }
     }
     let paid = 0;
@@ -83,9 +107,10 @@ exports.addInvoice = async (request, response, next) => {
     if (request.body.paid) {
       paid = request.body.paid;
       if (paid > totalCost) {
-        return response.status(400).json({ error: "Paid amount is greater than total cost" });
-      }
-      else if (paid === totalCost) {
+        return response
+          .status(400)
+          .json({ error: "Paid amount is greater than total cost" });
+      } else if (paid === totalCost) {
         invoiceStatus = "paid";
         totalDue = 0;
       } else {
@@ -114,7 +139,6 @@ exports.addInvoice = async (request, response, next) => {
       status: addedInvoice.status,
     });
     await patient.save();
-
 
     const date = new Date();
     const dueDate = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
@@ -148,8 +172,9 @@ exports.addInvoice = async (request, response, next) => {
       information: {
         number: addedInvoice._id,
         date: `${date.getDate()}/${date.getMonth() + 1}/${date.getFullYear()}`,
-        "due-date": `${dueDate.getDate()}/${dueDate.getMonth() + 1
-          }/${dueDate.getFullYear()}`,
+        "due-date": `${dueDate.getDate()}/${
+          dueDate.getMonth() + 1
+        }/${dueDate.getFullYear()}`,
       },
       products: invoiceServices.map((service) => ({
         quantity: "1",
@@ -195,8 +220,14 @@ exports.editInvoice = async (request, response, next) => {
     let paymentMethod = existingInvoice.paymentMethod;
     if (request.body.paymentMethod) {
       paymentMethod = request.body.paymentMethod;
-      if (paymentMethod !== "cash" && paymentMethod !== "credit card" && paymentMethod !== "insurance") {
-        return response.status(400).json({ error: "Payment method not accepted" });
+      if (
+        paymentMethod !== "cash" &&
+        paymentMethod !== "credit card" &&
+        paymentMethod !== "insurance"
+      ) {
+        return response
+          .status(400)
+          .json({ error: "Payment method not accepted" });
       }
     }
     let { clinicId, patientId, services } = request.body;
@@ -228,18 +259,29 @@ exports.editInvoice = async (request, response, next) => {
       services = existingInvoice.services;
     }
     for (let i = 0; i < services.length; i++) {
-      let clinicService = clinic._services.find((service) => service.name === services[i].name);
-      if (!clinicService) return response.status(400).json({ error: `Service ${services[i].name} not found in clinic ${request.body.clinicId}` });
-      let invoiceServicesobject = { "name": clinicService.name, "cost": clinicService.cost + services[i].additionalCosts };
+      let clinicService = clinic._services.find(
+        (service) => service.name === services[i].name
+      );
+      if (!clinicService)
+        return response
+          .status(400)
+          .json({
+            error: `Service ${services[i].name} not found in clinic ${request.body.clinicId}`,
+          });
+      let invoiceServicesobject = {
+        name: clinicService.name,
+        cost: clinicService.cost + services[i].additionalCosts,
+      };
       invoiceServices.push(invoiceServicesobject);
     }
 
     if (request.body.paid) {
       paid = request.body.paid;
       if (paid > total) {
-        return response.status(400).json({ error: "Paid amount is greater than total" });
-      }
-      else if (paid === total) {
+        return response
+          .status(400)
+          .json({ error: "Paid amount is greater than total" });
+      } else if (paid === total) {
         invoiceStatus = "paid";
         totalDue = 0;
       } else {
@@ -247,7 +289,6 @@ exports.editInvoice = async (request, response, next) => {
         totalDue = total - paid;
       }
     }
-
 
     let tempInvoice = {
       clinic_Id: clinicId,
@@ -268,7 +309,9 @@ exports.editInvoice = async (request, response, next) => {
     if (!patient) {
       patient = await patientSchema.findOne({ _id: patientId });
     }
-    const updatedInvoiceIndex = patient.invoices.findIndex((invoice) => invoice.invoice_id === existingInvoice._id);
+    const updatedInvoiceIndex = patient.invoices.findIndex(
+      (invoice) => invoice.invoice_id === existingInvoice._id
+    );
     patient.invoices[updatedInvoiceIndex].total = existingInvoice.total;
     patient.invoices[updatedInvoiceIndex].totalDue = existingInvoice.totalDue;
     patient.invoices[updatedInvoiceIndex].status = existingInvoice.status;
@@ -312,8 +355,9 @@ exports.editInvoice = async (request, response, next) => {
       information: {
         number: existingInvoice._id,
         date: `${date.getDate()}/${date.getMonth() + 1}/${date.getFullYear()}`,
-        "due-date": `${dueDate.getDate()}/${dueDate.getMonth() + 1
-          }/${dueDate.getFullYear()}`,
+        "due-date": `${dueDate.getDate()}/${
+          dueDate.getMonth() + 1
+        }/${dueDate.getFullYear()}`,
       },
       products: invoiceServices.map((service) => ({
         quantity: "1",
@@ -360,7 +404,8 @@ exports.removeInvoice = async (request, response, next) => {
     const patient = await patientSchema.findOne({ _id: invoice.patient_Id });
     console.log(invoice._id);
     patient.invoices = patient.invoices.filter(
-      (i) => i.invoice_id !== invoice._id);
+      (i) => i.invoice_id !== invoice._id
+    );
     await patient.save();
     response
       .status(201)
@@ -398,11 +443,14 @@ exports.allInvoicesReports = (request, response, next) => {
 // Daily Invoice Reports
 exports.dailyInvoicesReports = (request, response, next) => {
   let date = new Date();
-  date.setHours(0, 0, 0);
-  let day = 60 * 60 * 24 * 1000;
-  let nextDay = new Date(date.getTime() + day);
+  let today =
+    ("0" + date.getDate()).slice(-2) +
+    "/" +
+    ("0" + (date.getMonth() + 1)).slice(-2) +
+    "/" +
+    date.getFullYear();
   invoiceSchema
-    .find({ date: { $gt: date, $lt: nextDay } })
+    .find({ date: today })
     .populate({ path: "clinic_Id", select: { _id: 0 } })
     .populate({ path: "patient_Id", select: { _id: 0 } })
     .then((data) => {
@@ -441,7 +489,7 @@ const reqNamesToSchemaNames = (query) => {
         break;
       }
     }
-    replacedQuery[newKey] = query[key]; 
+    replacedQuery[newKey] = query[key];
   }
   return replacedQuery;
 };
