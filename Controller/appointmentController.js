@@ -1,8 +1,3 @@
-/*** callback fns for CRUD operations ***/
-
-/* require bcrypt */
-const bcrypt = require("bcrypt");
-
 /* require all needed modules */
 const appointmentSchema = require("../Models/appointmentModel");
 const doctorModel = require("../Models/doctorModel");
@@ -17,7 +12,6 @@ const {
   dateBetween,
   mapDateToDay,
 } = require("../helper/helperfns");
-const { request, response } = require("express");
 
 // Add a new Appointment
 exports.addAppointment = async (request, response, next) => {
@@ -42,6 +36,13 @@ exports.addAppointment = async (request, response, next) => {
     if (!patient) {
       return response.status(400).json({ message: "Patient not found." });
     }
+    if (doctor._excuses.includes(date))
+      return response
+        .status(400)
+        .json({
+          message:
+            "We are very sorry, Doctor has excused this day due to personal circumstances",
+        });
     let testExistingAppointment = await appointmentSchema.findOne({
       _patientId: patientId,
       _doctorId: doctorId,
@@ -70,10 +71,10 @@ exports.addAppointment = async (request, response, next) => {
           clinic._weeklySchedule[i].end
         ) &&
         dayInWeek == clinic._weeklySchedule[i].day
-      ){
+      ) {
         flagForSchedule = true;
-      break;
-    }
+        break;
+      }
     }
     if (!flagForSchedule)
       return response

@@ -300,6 +300,12 @@ let doctorPatchValidation = [
 let numberIdParamsValidation = [
   param("id").isInt().withMessage("ID must be number"),
 ];
+let excuseValidation = [
+  param("id").isInt().withMessage("ID must be number"),
+  param("day")
+    .matches(/^\d{2}-\d{2}-\d{4}$/)
+    .withMessage("Invalid date format, should be DD-MM-YYY"),
+];
 let employeeValidation = [
   validatePerson,
   check("salary").isInt().withMessage("salary should be number"),
@@ -319,7 +325,9 @@ let medicineValidation = [
     .isString()
     .withMessage("Production Date should be a string"),
   check("expiry").isString().withMessage("Expiry Date should be a string"),
-  check("leaflet").isString().withMessage("Medicine leaflet should be a string"),
+  check("leaflet")
+    .isString()
+    .withMessage("Medicine leaflet should be a string"),
   check("price").isInt().withMessage("Medicine Price should be a Number"),
   check("quantity").isInt().withMessage("Medicine Price should be a Number"),
 ];
@@ -552,26 +560,28 @@ let validateLogin = [
 ];
 
 let validatePayment = [
-  check('amount')
-    .not().isEmpty()
+  check("amount")
+    .not()
+    .isEmpty()
     .withMessage("Amount is required")
     .isNumeric()
     .withMessage("Amount must be a number"),
-  check('card_number')
-    .not().isEmpty()
-    .withMessage("Card number is required"),
-  check('exp_month')
-    .not().isEmpty()
+  check("card_number").not().isEmpty().withMessage("Card number is required"),
+  check("exp_month")
+    .not()
+    .isEmpty()
     .withMessage("Expiration month is required")
     .isNumeric()
     .withMessage("Expiration month must be a number"),
-  check('exp_year')
-    .not().isEmpty()
+  check("exp_year")
+    .not()
+    .isEmpty()
     .withMessage("Expiration year is required")
     .isNumeric()
     .withMessage("Expiration year must be a number"),
-  check('cvc')
-    .not().isEmpty()
+  check("cvc")
+    .not()
+    .isEmpty()
     .withMessage("CVC is required")
     .isNumeric()
     .withMessage("CVC must be a number"),
@@ -595,5 +605,6 @@ module.exports = {
   validateInvoice,
   validatePatchInvoice,
   validateLogin,
-  validatePayment
+  excuseValidation,
+  validatePayment,
 };
