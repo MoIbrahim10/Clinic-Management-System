@@ -7,6 +7,9 @@ const easyinvoice = require("easyinvoice");
 /* require all needed modules */
 const invoiceSchema = require("../Models/invoiceModel");
 const patientSchema = require("../Models/patientModel");
+const doctorSchema = require("../Models/doctorModel");
+const employeeSchema = require("../Models/employeeModel");
+const userSchema = require("../Models/usersModel");
 const clinicSchema = require("../Models/clinicModel");
 
 /* require helper functions (filter,sort,slice,paginate) */
@@ -22,7 +25,7 @@ exports.getInvoices = async (request, response, next) => {
   try {
     let query = reqNamesToSchemaNames(request.query);
     let invoice = await filterData(invoiceSchema, query, [
-      { path: "patient_Id", options: { strictPopulate: false }, select: { _email: 1, _fname: 1, _lname: 1 } },
+      // { path: "patient_Id", options: { strictPopulate: false }, select: { _email: 1, _fname: 1, _lname: 1 } },
       { path: "clinic_Id", options: { strictPopulate: false }, select: { _specilization: 1 } },
     ]);
     invoice = sortData(invoice, query);
@@ -53,11 +56,31 @@ exports.addInvoice = async (request, response, next) => {
     if (!clinic)
       return response.status(400).json({ error: "Clinic not found" });
 
+    let patientType = request.body.patientType;
+    if (patientType === "patient"){
     let patient = await patientSchema.findOne({
       _id: request.body.patientId,
     });
     if (!patient)
       return response.status(400).json({ error: "Patient not found" });
+  }
+  else if (patientType === "doctor"){
+    let patient = await doctorSchema.findOne({
+      _id: request.body.patientId,
+    });
+    if (!patient)
+      return response.status(400).json({ error: "Doctor not found" });
+  }
+  else if (patientType === "employee"){
+    let patient = await employeeSchema.findOne({
+      _id: request.body.patientId,
+    });
+    if (!patient)
+      return response.status(400).json({ error: "Employee not found" });
+  }
+  else{
+    return response.status(400).json({ error: "Patient type not found" });
+  }
     let services = request.body.services;
     let totalCost = 0;
     let invoiceServices = [];
@@ -65,20 +88,21 @@ exports.addInvoice = async (request, response, next) => {
     for (let i = 0; i < services.length; i++) {
       let clinicService = clinic._services.find((service) => service.name === services[i].name);
       if (!clinicService) return response.status(400).json({ error: `Service ${services[i].name} not found in clinic ${request.body.clinicId}` });
+
       /*  insurance added  */
-      switch (request.userData._role){
+      switch (patientType){
         case "doctor":
-          // discount 30%
-          let discountForDoctor = 30;
-          totalCost += (clinicService.cost * (100 - discountForDoctor / 100)) + services[i].additionalCosts;
-          let invoiceServicesObject1 = { "name": clinicService.name, "cost": clinicService.cost + services[i].additionalCosts };
+          // discount 70%
+          let doctorDiscount = 70/100;
+          totalCost += ((clinicService.cost + services[i].additionalCosts)*doctorDiscount);
+          let invoiceServicesObject1 = { "name": clinicService.name, "cost": ((clinicService.cost + services[i].additionalCosts)*doctorDiscount) };
           invoiceServices.push(invoiceServicesObject1);
           break;
         case "employee":
-          // discount 10%
-          let discountForEmployee = 10;
-          totalCost += (clinicService.cost * (100 - discountForEmployee / 100)) + services[i].additionalCosts;
-          let invoiceServicesObject2 = { "name": clinicService.name, "cost": clinicService.cost + services[i].additionalCosts };
+          // discount 40%
+          let employeeDiscount = 40/100;
+          totalCost += ((clinicService.cost + services[i].additionalCosts)*employeeDiscount);
+          let invoiceServicesObject2 = { "name": clinicService.name, "cost": ((clinicService.cost + services[i].additionalCosts)*employeeDiscount) };
           invoiceServices.push(invoiceServicesObject2);
           break;
         default:
@@ -115,7 +139,8 @@ exports.addInvoice = async (request, response, next) => {
 
     let addedInvoice = invoiceSchema({
       _id: generateInvoiceId(),
-      patient_Id: request.body.patientId,
+      patientId: request.body.patientId,
+      patientType: request.body.patientType,
       clinic_Id: request.body.clinicId,
       services: services,
       total: totalCost,
@@ -126,6 +151,7 @@ exports.addInvoice = async (request, response, next) => {
     });
     await addedInvoice.save();
 
+
     patient.invoices.push({
       invoice_id: addedInvoice._id,
       total: addedInvoice.total,
@@ -133,6 +159,9 @@ exports.addInvoice = async (request, response, next) => {
       status: addedInvoice.status,
     });
     await patient.save();
+
+  
+  
 
 
     const date = new Date();
@@ -234,14 +263,38 @@ exports.editInvoice = async (request, response, next) => {
       clinic = await clinicSchema.findById(clinicId);
     }
 
-    if (patientId) {
-      patient = await patientSchema.findById(patientId);
-      if (!patient) {
-        return response.status(400).json({ message: "Patient not found." });
+    if (!patientType) {
+      patientType = existingInvoice.patientType;
       }
-    } else {
-      patientId = existingInvoice.patient_Id;
-    }
+    if (!patientId){
+          patientId = existingInvoice.patientId;
+      }
+      if (patientType === "patient"){
+        let patient = await patientSchema.findOne({
+          _id: patientId,
+        });
+        if (!patient)
+          return response.status(400).json({ error: "Patient not found" });
+      }
+      else if (patientType === "doctor"){
+        let patient = await doctorSchema.findOne({
+          _id: patientId,
+        });
+        if (!patient)
+          return response.status(400).json({ error: "Patient not found" });
+      }
+      else if (patientType === "employee"){
+        let patient = await employeeSchema.findOne({
+          _id: patientId,
+        });
+        if (!patient)
+          return response.status(400).json({ error: "Patient not found" });
+      }
+      else{
+        return response.status(400).json({ error: "Patient type not found" });
+      }
+    
+
     let invoiceServices = [];
     if (!services) {
       services = existingInvoice.services;
@@ -249,8 +302,28 @@ exports.editInvoice = async (request, response, next) => {
     for (let i = 0; i < services.length; i++) {
       let clinicService = clinic._services.find((service) => service.name === services[i].name);
       if (!clinicService) return response.status(400).json({ error: `Service ${services[i].name} not found in clinic ${request.body.clinicId}` });
-      let invoiceServicesobject = { "name": clinicService.name, "cost": clinicService.cost + services[i].additionalCosts };
-      invoiceServices.push(invoiceServicesobject);
+      switch (patientType){
+        case "doctor":
+          // discount 70%
+          let doctorDiscount = 70/100;
+          totalCost += ((clinicService.cost + services[i].additionalCosts)*doctorDiscount);
+          let invoiceServicesObject1 = { "name": clinicService.name, "cost": ((clinicService.cost + services[i].additionalCosts)*doctorDiscount) };
+          invoiceServices.push(invoiceServicesObject1);
+          break;
+        case "employee":
+          // discount 40%
+          let employeeDiscount = 40/100;
+          totalCost += ((clinicService.cost + services[i].additionalCosts)*employeeDiscount);
+          let invoiceServicesObject2 = { "name": clinicService.name, "cost": ((clinicService.cost + services[i].additionalCosts)*employeeDiscount) };
+          invoiceServices.push(invoiceServicesObject2);
+          break;
+        default:
+          // no discount
+          totalCost += clinicService.cost + services[i].additionalCosts;
+          let invoiceServicesObject3 = { "name": clinicService.name, "cost": clinicService.cost + services[i].additionalCosts };
+          invoiceServices.push(invoiceServicesObject3);
+          break;
+      }
     }
 
     if (request.body.paid) {
@@ -270,7 +343,8 @@ exports.editInvoice = async (request, response, next) => {
 
     let tempInvoice = {
       clinic_Id: clinicId,
-      patient_Id: patientId,
+      patientId,
+      patientType,
       services: services,
       total: total,
       paymentMethod: paymentMethod,
@@ -376,11 +450,25 @@ exports.removeInvoice = async (request, response, next) => {
       return next(new Error("invoice not found"));
     }
     fs.unlinkSync(`invoices/${invoice._id}.pdf`);
-    const patient = await patientSchema.findOne({ _id: invoice.patient_Id });
-    console.log(invoice._id);
+    if(invoice.patientType === "patient"){
+    const patient = await patientSchema.findOne({ _id: invoice.patientId });
     patient.invoices = patient.invoices.filter(
       (i) => i.invoice_id !== invoice._id);
     await patient.save();
+    }
+    else if (invoice.patientType === "doctor") {
+      const doctor = await doctorSchema.findOne({ _id: invoice.patientId });
+      doctor.invoices = doctor.invoices.filter(
+        (i) => i.invoice_id !== invoice._id);
+      await doctor.save();
+    }
+    else if (invoice.patientType === "employee") {
+      const employee = await employeeSchema.findOne({_id: invoice.patientId});
+      employee.invoices = employee.invoices.filter(
+        (i) => i.invoice_id !== invoice._id);
+      await employee.save();
+    }
+
     response
       .status(201)
       .json({ message: "Invoice removed successfully.", invoice });
@@ -407,7 +495,7 @@ exports.allInvoicesReports = (request, response, next) => {
   invoiceSchema
     .find()
     .populate({ path: "clinic_Id", select: { _id: 0 } })
-    .populate({ path: "patient_Id", select: { _id: 0 } })
+    // .populate({ path: "patient_Id", select: { _id: 0 } })
     .then((data) => {
       response.status(200).json(data);
     })
@@ -423,7 +511,7 @@ exports.dailyInvoicesReports = (request, response, next) => {
   invoiceSchema
     .find({ date: { $gt: date, $lt: nextDay } })
     .populate({ path: "clinic_Id", select: { _id: 0 } })
-    .populate({ path: "patient_Id", select: { _id: 0 } })
+    // .populate({ path: "patient_Id", select: { _id: 0 } })
     .then((data) => {
       response.status(200).json(data);
     })
@@ -446,7 +534,6 @@ const reqNamesToSchemaNames = (query) => {
   const fieldsToReplace = {
     id: "_id",
     clinicId: "clinic_Id",
-    patientId: "patient_Id",
     total: "total",
     services: "services",
   };

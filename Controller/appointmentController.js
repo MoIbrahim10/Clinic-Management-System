@@ -5,6 +5,7 @@
 const appointmentSchema = require("../Models/appointmentModel");
 const doctorModel = require("../Models/doctorModel");
 const patientModel = require("../Models/patientModel");
+const employeeModel = require("../Models/employeeModel");
 const clinicModel = require("../Models/clinicModel");
 const userModel = require("../Models/usersModel");
 /* require helper functions (filter,sort,slice,paginate) */
@@ -20,7 +21,7 @@ const {
 // Add a new Appointment
 exports.addAppointment = async (request, response, next) => {
   try {
-    const { doctorId, date, time, clinicId } = request.body;
+    const { doctorId,patientId, patientType, date, time, clinicId } = request.body;
     const clinic = await clinicModel.findById(clinicId);
     if (!clinic) {
       return response
@@ -36,22 +37,33 @@ exports.addAppointment = async (request, response, next) => {
         message: `Doctor ${doctorId} does not work at clinic ${clinicId}.`,
       });
     }
-    const userType = request.userData.role;
-    const userId = request.userData.id;
-    if (userType === "doctor" && userId === doctorId) {
+
+    if (patientType === "patient") {
+      let patient = await patientModel.findById(patientId);
+        if (!patient) {
+          return response.status(400).json({ message: "Patient not found." });
+        }
+    }
+    if (patientType === "doctor" && patientId === doctorId) {
       return response
         .status(400)
         .json({ message: "Doctors cannot create appointments with themselves." });
     }
-    let patient;
-    if (userType === "patient") {
-      patient = await patientModel.findById(userId);
+    if (patientType === "employee") {
+      let patient = await employeeModel.findById(patientId);
       if (!patient) {
         return response.status(400).json({ message: "Patient not found." });
       }
     }
+    if (patientType === "doctor") {
+      let patient = await doctorModel.findById(patientId);
+      if (!patient) {
+        return response.status(400).json({ message: "Patient not found." });
+      }
+    }
+
     const testExistingAppointment = await appointmentSchema.findOne({
-      userId,
+      patientId,
       _doctorId: doctorId,
       _date: date,
     });
@@ -115,8 +127,8 @@ exports.addAppointment = async (request, response, next) => {
       _id,
       _date: date,
       _time: time,
-      userId,
-      userType,
+      patientId,
+      patientType,
       _doctorId: doctorId,
       _clinicId: clinicId,
     });
@@ -137,13 +149,13 @@ exports.addAppointment = async (request, response, next) => {
 exports.patchAppointment = async (request, response, next) => {
   try {
     const appointmentId = request.params.id;
-    const { _doctorId, userId, userType, _date, _time } = request.body;
+    const { _doctorId, patientId, patientType, _date, _time } = request.body;
 
     const existingAppointment = await appointmentSchema.findById(appointmentId);
     if (!existingAppointment) {
       return response.status(400).json({ message: "Appointment not found." });
     }
-    if (!_dooctorId && !userId && !userType && !_date && !_time) {
+    if (!_dooctorId && !patientId && !patientType && !_date && !_time) {
       return response
         .status(400)
         .json({ message: "No fields to update." });
@@ -163,15 +175,16 @@ exports.patchAppointment = async (request, response, next) => {
       }
     }
 
-    if (userId) {
-      const user = await userModel.findById(userId);
+    if (!patientType) {
+      patientType = existingAppointment.patientType;
+      }
+    if (patientId) {
+      const user = await userModel.find({_idInSchema:patientId, _role: patientType});
       if (!user) {
         return response.status(400).json({ message: "User not found." });
       }
-      if (!userType) {
-      userType = existingAppointment.userType;
-      }
-      if (userType === "doctor" && userId === _doctorId) {
+      
+      if (patientType === "doctor" && patientId === _doctorId) {
         return response
           .status(400)
           .json({ message: "Doctors cannot create appointments with themselves." });
@@ -184,11 +197,11 @@ exports.patchAppointment = async (request, response, next) => {
     if (_doctorId) {
       updateFields["_doctorId"] = _doctorId;
     }
-    if (userId) {
-      updateFields["userId"] = userId;
+    if (patientId) {
+      updateFields["patientId"] = patientId;
     }
-    if (userType) {
-      updateFields["userType"] = userType;
+    if (patientType) {
+      updateFields["patientType"] = patientType;
     }
     if (_date) {
       const dateRegex = /^\d{2}\/\d{2}\/\d{4}$/;
@@ -248,6 +261,12 @@ exports.removeAppointmentById = async (request, response, next) => {
     if (!appointment) {
       return response.status(400).json({ message: "Appointment not found." });
     }
+
+    await doctorModel.findOneAndUpdate(
+      { _id: appointment._doctorId },
+      { $pull: { _appointments: appointment._id } },
+      { new: true }
+    );
     response.status(200).json({ message: "Appointment removed." });
   } catch (error) {
     next(error);
@@ -260,7 +279,7 @@ exports.getAllAppointments = async (request, response, next) => {
     let query = reqNamesToSchemaNames(request.query);
     let appointments = await filterData(appointmentSchema, query, [
       { path: "_doctorId", options: { strictPopulate: false } },
-      { path: "_patientId", options: { strictPopulate: false } },
+      // { path: "_patientId", options: { strictPopulate: false } },
       { path: "_clinicId", options: { strictPopulate: false } },
     ]);
     appointments = sortData(appointments, query);
@@ -290,7 +309,7 @@ exports.getAppointmentById = async (request, response, next) => {
 exports.allAppointmentsReports = (request, response, next) => {
   appointmentSchema
     .find()
-    .populate({ path: "_patientId", select: { _id: 0, _fname: 1, _lname: 1 } })
+    // .populate({ path: "_patientId", select: { _id: 0, _fname: 1, _lname: 1 } })
     .populate({ path: "_doctorId", select: { _id: 0, _fname: 1, _lname: 1 } })
     .populate({
       path: "_clinicId",
@@ -313,7 +332,7 @@ exports.dailyAppointmentsReports = (request, response, next) => {
     date.getFullYear();
   appointmentSchema
     .find({ _date: today })
-    .populate({ path: "_patientId", select: { _id: 0, _fname: 1, _lname: 1 } })
+    // .populate({ path: "_patientId", select: { _id: 0, _fname: 1, _lname: 1 } })
     .populate({ path: "_doctorId", select: { _id: 0, _fname: 1, _lname: 1 } })
     .populate({
       path: "_clinicId",
@@ -343,7 +362,7 @@ exports.rangeAppointmentsReports = (request, response, next) => {
 exports.patientAppointmentsReports = (request, response, next) => {
   appointmentSchema
     .find({ _patientId: request.params.id })
-    .populate({ path: "_patientId", select: { _id: 0, _fname: 1, _lname: 1 } })
+    // .populate({ path: "_patientId", select: { _id: 0, _fname: 1, _lname: 1 } })
     .populate({ path: "_doctorId", select: { _id: 0, _fname: 1, _lname: 1 } })
     .populate({ path: "_clinicId", select: { _id: 0, _specilization: 1 } })
     .then((data) => {
@@ -356,7 +375,7 @@ exports.patientAppointmentsReports = (request, response, next) => {
 exports.doctorAppointmentsReports = (request, response, next) => {
   appointmentSchema
     .find({ _doctorId: request.params.id })
-    .populate({ path: "_patientId", select: { _id: 0, _fname: 1, _lname: 1 } })
+    // .populate({ path: "_patientId", select: { _id: 0, _fname: 1, _lname: 1 } })
     .populate({ path: "_doctorId", select: { _id: 0, _fname: 1, _lname: 1 } })
     .populate({ path: "_clinicId", select: { _id: 0, _specilization: 1 } })
     .then((data) => {
@@ -371,7 +390,6 @@ const reqNamesToSchemaNames = (query) => {
     date: "_date",
     time: "_time",
     doctorId: "_doctorId",
-    patientId: "_patientId",
     clinicId: "_clinicId",
   };
 
