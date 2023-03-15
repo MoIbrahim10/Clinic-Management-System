@@ -509,8 +509,8 @@ exports.addExcuse = async (request, response, next) => {
         { _id: 1, _patientId: 1 }
       )
       .populate({
-        path: "_patientId",
-        select: { _id: 0, _email: 1, _fname: 1, _lname: 1 },
+        path: "patientId",
+        select: { _id: 0, _email: 1 },
       });
     let deletedAppointmentsEmails = deletedAppointments.map(
       (element) => element._id
@@ -572,7 +572,6 @@ const reqNamesToSchemaNames = (query) => {
     speciality: "_specilization",
     clinic: "_clinics",
     medicalHistory: "_medicalHistory",
-
   };
 
   const replacedQuery = {};
